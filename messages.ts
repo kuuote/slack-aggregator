@@ -46,6 +46,12 @@ async function saveMessage(channel: string, msg: unknown) {
   if (!isSlackMessage(msg)) {
     return;
   }
+  // deno-lint-ignore no-explicit-any
+  delete (msg as any).team;
+  // deno-lint-ignore no-explicit-any
+  delete (msg as any).client_msg_id;
+  // deno-lint-ignore no-explicit-any
+  delete (msg as any).type;
   const baseDir = "./log/messages/" + channel;
   await Deno.mkdir(baseDir, { recursive: true });
   const msgPath = baseDir + "/" + msg.ts.replace(".", "");
