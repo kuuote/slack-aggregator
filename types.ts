@@ -4,14 +4,13 @@
 
 export type Channel = {
   id: string;
-  name: string;
-  is_member: boolean;
+  name?: string;
 };
 
 export function isChannel(x: any): x is Channel {
   return typeof x?.id === "string" &&
-    typeof x?.name === "string" &&
-    typeof x?.is_member === "boolean";
+    (typeof x?.name === "string" ||
+      x?.name == null);
 }
 
 /* user */
