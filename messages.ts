@@ -107,7 +107,6 @@ async function fetchReplies(channel: string, timestamp: string) {
       fetchReply(channel, timestamp, cursor)
     );
     console.log(result.messages);
-    await delay(60000 / 50);
     for (const message of result.messages) {
       await saveMessage(channel, message);
     }
