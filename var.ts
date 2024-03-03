@@ -6,3 +6,8 @@ export const cookie = Deno.env.get("SLACK_COOKIE");
 const workSpace = Deno.env.get("SLACK_WORKSPACE");
 
 export const baseURL = `https://${workSpace}.slack.com/api/`;
+
+// channels
+
+export const channelsType = Deno.env.get("SLACK_CHANNELS_TYPE") ??
+  "public_channel";

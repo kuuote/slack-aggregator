@@ -5,6 +5,7 @@ import { withRetry } from "./retry.ts";
 import { Channel, isChannel } from "./types.ts";
 import { stringifyReplacer } from "./util.js";
 import { isArray } from "https://deno.land/x/unknownutil@v2.0.0/mod.ts";
+import { channelsType } from "./var.ts";
 
 type ChannelsResponse = {
   ok: true;
@@ -25,6 +26,7 @@ async function fetchChannels(cursor?: string): Promise<ChannelsResponse> {
   const fd = new FormData();
   if (cursor) {
     fd.append("cursor", cursor);
+    fd.append("types", channelsType);
   }
   const result = await slackRequest("conversations.list", fd);
   if (isValid(result)) {

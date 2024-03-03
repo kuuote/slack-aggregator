@@ -7,6 +7,9 @@ Slackのログを収集するツールです。
 
 .env.example を例に .env を作成してトークン等をセットしてください。
 
+SLACK_CHANNELS_TYPEには取得したいチャンネルの種類を記述してください。
+指定の方法は https://api.slack.com/methods/conversations.list#arg_types を参照してください。
+
 * 使い方
 
 トークンをセットしたら ./run を実行するか各スクリプトを実行します。
