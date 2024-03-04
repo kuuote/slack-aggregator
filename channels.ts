@@ -1,26 +1,20 @@
-// deno-lint-ignore-file camelcase
+import { is, u } from "./deps/unknownutil.ts";
 import { slackRequest } from "./request.ts";
 import { delay } from "./retry.ts";
 import { withRetry } from "./retry.ts";
 import { Channel, isChannel } from "./types.ts";
 import { stringifyReplacer } from "./util.js";
-import { isArray } from "https://deno.land/x/unknownutil@v2.0.0/mod.ts";
 import { channelsType } from "./var.ts";
 
-type ChannelsResponse = {
-  ok: true;
-  channels: Channel[];
-  response_metadata: {
-    next_cursor: string;
-  };
-};
+const isChannelsResponse = is.ObjectOf({
+  ok: is.LiteralOf(true),
+  channels: is.ArrayOf(isChannel),
+  response_metadata: is.ObjectOf({
+    next_cursor: is.String,
+  }),
+});
 
-// deno-lint-ignore no-explicit-any
-function isValid(x: any): x is ChannelsResponse {
-  return x?.ok === true &&
-    isArray(x?.channels, isChannel) &&
-    typeof x?.response_metadata?.next_cursor === "string";
-}
+type ChannelsResponse = u.PredicateType<typeof isChannelsResponse>;
 
 async function fetchChannels(cursor?: string): Promise<ChannelsResponse> {
   const fd = new FormData();
@@ -29,11 +23,7 @@ async function fetchChannels(cursor?: string): Promise<ChannelsResponse> {
     fd.append("types", channelsType);
   }
   const result = await slackRequest("conversations.list", fd);
-  if (isValid(result)) {
-    return result;
-  } else {
-    throw Error("Illegal response: " + result);
-  }
+  return u.ensure(result, isChannelsResponse);
 }
 
 async function fetchAll(): Promise<Channel[]> {

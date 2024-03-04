@@ -1,39 +1,29 @@
-// deno-lint-ignore-file no-explicit-any
+import { is, u } from "./deps/unknownutil.ts";
 
 /* channel */
 
-export type Channel = {
-  id: string;
-  name?: string;
-};
+export const isChannel = is.ObjectOf({
+  id: is.String,
+  name: is.String,
+});
 
-export function isChannel(x: any): x is Channel {
-  return typeof x?.id === "string" &&
-    (typeof x?.name === "string" ||
-      x?.name == null);
-}
+export type Channel = u.PredicateType<typeof isChannel>;
 
 /* user */
 
-export type User = {
-  id: string;
-  name: string;
-  real_name: string;
-};
+export const isUser = is.ObjectOf({
+  id: is.String,
+  name: is.String,
+  real_name: is.String,
+});
 
-export function isUser(x: any): x is User {
-  return typeof x?.id === "string" &&
-    typeof x?.name === "string" &&
-    typeof x?.real_name === "string";
-}
+export type User = u.PredicateType<typeof isUser>;
 
 /* message */
 
-export type SlackMessage = {
-  ts: string;
-  thread_ts?: string;
-};
+export const isSlackMessage = is.ObjectOf({
+  ts: is.String,
+  thread_ts: is.OptionalOf(is.String),
+});
 
-export function isSlackMessage(x: any): x is SlackMessage {
-  return typeof x?.ts === "string";
-}
+export type SlackMessage = u.PredicateType<typeof isSlackMessage>;

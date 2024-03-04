@@ -1,57 +1,42 @@
-// deno-lint-ignore-file camelcase
+import { is, u } from "./deps/unknownutil.ts";
 import { slackRequest } from "./request.ts";
 import { delay } from "./retry.ts";
 import { withRetry } from "./retry.ts";
-import { isChannel, isSlackMessage, SlackMessage } from "./types.ts";
+import { isChannel, isSlackMessage as isSlackMessageO } from "./types.ts";
 import { stringifyReplacer } from "./util.js";
-import { isArray } from "https://deno.land/x/unknownutil@v2.0.0/mod.ts";
 
-function asArray<T extends unknown>(
-  // deno-lint-ignore no-explicit-any
-  x: any,
-  // deno-lint-ignore no-explicit-any
-  pred?: (x: any) => x is T,
-): Array<T> {
-  return Array.isArray(x) ? (pred ? x.filter(pred) : x) : [];
-}
+const isSlackMessage = is.IntersectionOf([
+  isSlackMessageO,
+  is.ObjectOf({
+    team: is.Unknown,
+    client_msg_id: is.Unknown,
+    type: is.Unknown,
+  }),
+]);
 
-type HistoryResponseBase = {
-  ok: true;
-  messages: SlackMessage[];
-};
+const isHistoryResponse = is.ObjectOf({
+  ok: is.LiteralOf(true),
+  messages: is.ArrayOf(isSlackMessage),
+});
 
-type HasNoMore = {
-  has_more: false;
-};
+type HistoryResponse = u.PredicateType<typeof isHistoryResponse>;
 
-type HasMore = {
-  has_more: true;
-  response_metadata: {
-    next_cursor: string;
-  };
-};
-
-type Cursor = HasNoMore | HasMore;
-
-type HistoryResponse = HistoryResponseBase & Cursor;
-
-// deno-lint-ignore no-explicit-any
-function isValid(x: any): x is HistoryResponse {
-  return x?.ok === true &&
-    isArray(x?.messages, isSlackMessage) &&
-    typeof x?.has_more === "boolean";
-}
+const hasMore = is.ObjectOf({
+  has_more: is.LiteralOf(true),
+  response_metadata: is.ObjectOf({
+    next_cursor: is.String,
+  }),
+});
 
 async function saveMessage(channel: string, msg: unknown) {
   if (!isSlackMessage(msg)) {
     return;
   }
-  // deno-lint-ignore no-explicit-any
-  delete (msg as any).team;
-  // deno-lint-ignore no-explicit-any
-  delete (msg as any).client_msg_id;
-  // deno-lint-ignore no-explicit-any
-  delete (msg as any).type;
+
+  delete msg.team;
+  delete msg.client_msg_id;
+  delete msg.type;
+
   const baseDir = "./log/messages/" + channel;
   await Deno.mkdir(baseDir, { recursive: true });
   const msgPath = baseDir + "/" + msg.ts.replace(".", "");
@@ -73,11 +58,10 @@ async function fetchHistory(
     fd.append("cursor", cursor);
   }
   const result = await slackRequest("conversations.history", fd);
-  if (isValid(result)) {
-    return result;
-  } else {
-    throw Error("Illegal response: " + result);
-  }
+  return u.ensure(
+    result,
+    isHistoryResponse,
+  );
 }
 
 async function fetchReply(
@@ -92,11 +76,10 @@ async function fetchReply(
     fd.append("cursor", cursor);
   }
   const result = await slackRequest("conversations.replies", fd);
-  if (isValid(result)) {
-    return result;
-  } else {
-    throw Error("Illegal response: " + result);
-  }
+  return u.ensure(
+    result,
+    isHistoryResponse,
+  );
 }
 
 async function fetchReplies(channel: string, timestamp: string) {
@@ -110,7 +93,7 @@ async function fetchReplies(channel: string, timestamp: string) {
     for (const message of result.messages) {
       await saveMessage(channel, message);
     }
-    if (result.has_more) {
+    if (hasMore(result)) {
       cursor = result.response_metadata.next_cursor;
     } else {
       return;
@@ -131,7 +114,7 @@ async function fetchAll(channel: string, oldest: string) {
       }
       await saveMessage(channel, message);
     }
-    if (result.has_more) {
+    if (hasMore(result)) {
       cursor = result.response_metadata.next_cursor;
     } else {
       return;
@@ -156,10 +139,10 @@ if (range === "oldest") {
 
 const fails: string[] = [];
 
-const channels = asArray(
+const channels = u.maybe(
   JSON.parse(await Deno.readTextFile("./log/channels.json")),
-  isChannel,
-);
+  is.ArrayOf(isChannel),
+) ?? [];
 
 for (const channel of channels) {
   try {
