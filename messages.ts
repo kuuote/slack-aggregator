@@ -1,3 +1,4 @@
+import { parseArgs } from "./deps/std_cli.ts";
 import { is, u } from "./deps/unknownutil.ts";
 import { slackRequest } from "./request.ts";
 import { delay } from "./retry.ts";
@@ -122,8 +123,11 @@ async function fetchAll(channel: string, oldest: string) {
   }
 }
 
-const range = Deno.args[0] ?? String(
-  prompt("aggregate range?(if 'oldest' was given, aggregate all messages):"),
+const args = parseArgs(Deno.args);
+
+const range = String(
+  args._[0] ??
+    prompt("aggregate range?(if 'oldest' was given, aggregate all messages):"),
 );
 let boundary = NaN;
 
