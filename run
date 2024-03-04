@@ -2,4 +2,4 @@
 
 deno run --no-check -A users.ts
 deno run --no-check -A channels.ts
-deno run --no-check -A messages.ts 172800
+deno run --no-check -A messages.ts "$@"
