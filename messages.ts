@@ -42,7 +42,7 @@ async function saveMessage(channel: string, msg: unknown) {
   const msgPath = baseDir + "/" + msg.ts.replace(".", "");
   await Deno.writeTextFile(
     msgPath,
-    JSON.stringify(msg, stringifyReplacer, "\t"),
+    JSON.stringify(msg, stringifyReplacer),
   );
 }
 

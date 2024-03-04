@@ -20,6 +20,6 @@ const result = await withRetry(() => slackRequest("users.list"));
 await Deno.mkdir("./log", { recursive: true });
 await Deno.writeTextFile(
   "./log/users.json",
-  JSON.stringify(getUsers(result), stringifyReplacer, "\t"),
+  JSON.stringify(getUsers(result), stringifyReplacer),
 );
 console.log("write users");

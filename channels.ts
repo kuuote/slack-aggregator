@@ -47,7 +47,7 @@ try {
   await Deno.mkdir("./log", { recursive: true });
   await Deno.writeTextFile(
     "./log/channels.json",
-    JSON.stringify(channels, stringifyReplacer, "\t"),
+    JSON.stringify(channels, stringifyReplacer),
   );
   console.log("write channels");
 } catch (e) {
