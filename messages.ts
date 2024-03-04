@@ -47,15 +47,33 @@ async function saveMessage(channel: string, msg: unknown) {
   );
 }
 
+function oldestLog(channel: string): string | undefined {
+  try {
+    const dir = `./log/messages/${channel}`;
+    const dirEntries = [...Deno.readDirSync(dir)].map((e) => e.name).sort();
+    const oldest = dirEntries[0];
+    return oldest.replace(/.{6}$/, ".$&");
+  } catch {
+    return;
+  }
+}
+
 async function fetchHistory(
   channel: string,
   oldest: string,
+  resume: boolean,
   cursor?: string,
 ): Promise<HistoryResponse> {
   const fd = new FormData();
   fd.append("channel", channel);
   fd.append("oldest", oldest);
-  if (cursor) {
+  if (resume && cursor == null) {
+    const latest = oldestLog(channel);
+    if (latest != null) {
+      fd.append("latest", latest);
+    }
+  }
+  if (cursor != null) {
     fd.append("cursor", cursor);
   }
   const result = await slackRequest("conversations.history", fd);
@@ -102,10 +120,12 @@ async function fetchReplies(channel: string, timestamp: string) {
   }
 }
 
-async function fetchAll(channel: string, oldest: string) {
+async function fetchAll(channel: string, oldest: string, resume: boolean) {
   let cursor: string | undefined;
   while (true) {
-    const result = await withRetry(() => fetchHistory(channel, oldest, cursor));
+    const result = await withRetry(() =>
+      fetchHistory(channel, oldest, resume, cursor)
+    );
     console.log(result.messages);
     await delay(60000 / 50);
     for (const message of result.messages) {
@@ -123,7 +143,9 @@ async function fetchAll(channel: string, oldest: string) {
   }
 }
 
-const args = parseArgs(Deno.args);
+const args = parseArgs(Deno.args, {
+  boolean: ["resume"],
+});
 
 const range = String(
   args._[0] ??
@@ -150,7 +172,7 @@ const channels = u.maybe(
 
 for (const channel of channels) {
   try {
-    await fetchAll(channel.id, boundary.toString());
+    await fetchAll(channel.id, boundary.toString(), Boolean(args.resume));
   } catch {
     console.warn("fetch failed " + channel.name);
     fails.push(channel.name);
