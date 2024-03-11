@@ -4,7 +4,8 @@ import { is, u } from "./deps/unknownutil.ts";
 
 export const isChannel = is.ObjectOf({
   id: is.String,
-  name: is.String,
+  name: is.OptionalOf(is.String),
+  user: is.OptionalOf(is.String),
 });
 
 export type Channel = u.PredicateType<typeof isChannel>;

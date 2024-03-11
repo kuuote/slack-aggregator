@@ -171,11 +171,12 @@ const channels = u.maybe(
 ) ?? [];
 
 for (const channel of channels) {
+  const name = channel.name ?? channel.user ?? "";
   try {
     await fetchAll(channel.id, boundary.toString(), Boolean(args.resume));
   } catch {
     console.warn("fetch failed " + channel.name);
-    fails.push(channel.name);
+    fails.push(name);
   }
 }
 

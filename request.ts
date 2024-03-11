@@ -5,9 +5,9 @@ export async function slackRequest(
   method: string,
   data = new FormData(),
 ): Promise<unknown> {
-  data.set("token", token);
+  data.set("token", String(token));
   const result = await fetch(baseURL + method, {
-    headers: {
+    headers: cookie == null ? {} : {
       cookie,
     },
     body: data,
